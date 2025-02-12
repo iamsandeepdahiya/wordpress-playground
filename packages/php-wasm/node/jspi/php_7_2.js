@@ -1,6 +1,6 @@
 const dependencyFilename = __dirname + '/7_2_34/php_7_2.wasm';
 export { dependencyFilename };
-export const dependenciesTotalSize = 14244550;
+export const dependenciesTotalSize = 14464896;
 export function init(RuntimeName, PHPLoader) {
 	// The rest of the code comes from the built php.js file and esm-suffix.js
 	// include: shell.js
@@ -5527,6 +5527,32 @@ export function init(RuntimeName, PHPLoader) {
 		}
 	}
 
+	var convertI32PairToI53Checked = (lo, hi) =>
+		(hi + 2097152) >>> 0 < 4194305 - !!lo
+			? (lo >>> 0) + hi * 4294967296
+			: NaN;
+
+	function ___syscall_fallocate(
+		fd,
+		mode,
+		offset_low,
+		offset_high,
+		len_low,
+		len_high
+	) {
+		var offset = convertI32PairToI53Checked(offset_low, offset_high);
+		var len = convertI32PairToI53Checked(len_low, len_high);
+		try {
+			if (isNaN(offset)) return 61;
+			var stream = SYSCALLS.getStreamFromFD(fd);
+			FS.allocate(stream, offset, len);
+			return 0;
+		} catch (e) {
+			if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
+			return -e.errno;
+		}
+	}
+
 	function ___syscall_fchmod(fd, mode) {
 		try {
 			FS.fchmod(fd, mode);
@@ -5622,6 +5648,17 @@ export function init(RuntimeName, PHPLoader) {
 		}
 	}
 
+	function ___syscall_fdatasync(fd) {
+		try {
+			var stream = SYSCALLS.getStreamFromFD(fd);
+			return 0;
+		} catch (e) {
+			// we can't do anything synchronously; the in-memory FS is already synced to
+			if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
+			return -e.errno;
+		}
+	}
+
 	function ___syscall_fstat64(fd, buf) {
 		try {
 			var stream = SYSCALLS.getStreamFromFD(fd);
@@ -5631,11 +5668,6 @@ export function init(RuntimeName, PHPLoader) {
 			return -e.errno;
 		}
 	}
-
-	var convertI32PairToI53Checked = (lo, hi) =>
-		(hi + 2097152) >>> 0 < 4194305 - !!lo
-			? (lo >>> 0) + hi * 4294967296
-			: NaN;
 
 	function ___syscall_ftruncate64(fd, length_low, length_high) {
 		var length = convertI32PairToI53Checked(length_low, length_high);
@@ -7118,32 +7150,6 @@ export function init(RuntimeName, PHPLoader) {
 		}
 	}
 
-	var _fd_sync = function (fd) {
-		try {
-			var stream = SYSCALLS.getStreamFromFD(fd);
-			return Asyncify.handleSleep((wakeUp) => {
-				var mount = stream.node.mount;
-				if (!mount.type.syncfs) {
-					// We write directly to the file system, so there's nothing to do here.
-					wakeUp(0);
-					return;
-				}
-				mount.type.syncfs(mount, false, (err) => {
-					if (err) {
-						wakeUp(29);
-						return;
-					}
-					wakeUp(0);
-				});
-			});
-		} catch (e) {
-			if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
-			return e.errno;
-		}
-	};
-
-	_fd_sync.isAsync = true;
-
 	/** @param {number=} offset */ var doWritev = (
 		stream,
 		iov,
@@ -8454,10 +8460,12 @@ export function init(RuntimeName, PHPLoader) {
 		/** @export */ __syscall_dup: ___syscall_dup,
 		/** @export */ __syscall_dup3: ___syscall_dup3,
 		/** @export */ __syscall_faccessat: ___syscall_faccessat,
+		/** @export */ __syscall_fallocate: ___syscall_fallocate,
 		/** @export */ __syscall_fchmod: ___syscall_fchmod,
 		/** @export */ __syscall_fchown32: ___syscall_fchown32,
 		/** @export */ __syscall_fchownat: ___syscall_fchownat,
 		/** @export */ __syscall_fcntl64: ___syscall_fcntl64,
+		/** @export */ __syscall_fdatasync: ___syscall_fdatasync,
 		/** @export */ __syscall_fstat64: ___syscall_fstat64,
 		/** @export */ __syscall_ftruncate64: ___syscall_ftruncate64,
 		/** @export */ __syscall_getcwd: ___syscall_getcwd,
@@ -8509,7 +8517,6 @@ export function init(RuntimeName, PHPLoader) {
 		/** @export */ fd_fdstat_get: _fd_fdstat_get,
 		/** @export */ fd_read: _fd_read,
 		/** @export */ fd_seek: _fd_seek,
-		/** @export */ fd_sync: _fd_sync,
 		/** @export */ fd_write: _fd_write,
 		/** @export */ getaddrinfo: _getaddrinfo,
 		/** @export */ getnameinfo: _getnameinfo,
