@@ -91,6 +91,11 @@ const argParser = yargs(process.argv.slice(2))
 			choices: ['yes', 'no'],
 			description: 'Build with source maps',
 		},
+		WITH_DEBUG: {
+			type: 'string',
+			choices: ['yes', 'no'],
+			description: 'Build with DWARF debug information.',
+		},
 		WITH_ICONV: {
 			type: 'string',
 			choices: ['yes', 'no'],
@@ -219,6 +224,8 @@ await asyncSpawn(
 		getArg('WITH_SOURCEMAPS'),
 		'--build-arg',
 		`OUTPUT_DIR_FOR_SOURCE_MAP_BASE=${outputDir}`,
+		'--build-arg',
+		getArg('WITH_DEBUG'),
 		'--build-arg',
 		getArg('WITH_ICONV'),
 		'--build-arg',

@@ -81,6 +81,7 @@ ARG WITH_OPENSSL
 ARG WITH_ICONV
 ARG WITH_SOURCEMAPS
 ARG OUTPUT_DIR_FOR_SOURCE_MAP_BASE
+ARG WITH_DEBUG
 ARG WITH_WS_NETWORKING_PROXY
 
 # The platform to build for: web or node
@@ -407,18 +408,22 @@ RUN if [[ "${PHP_VERSION:0:1}" -le "7" && "${PHP_VERSION:2:1}" -le "3" ]]; then 
 
 ARG WITH_SOURCEMAPS
 ARG OUTPUT_DIR_FOR_SOURCE_MAP_BASE
+ARG WITH_DEBUG
 RUN set -euxo pipefail; \
 	if [ "$EMSCRIPTEN_ENVIRONMENT" = "node" ]; then \
 		# Add nodefs when building for node.js
 		echo -n ' -lnodefs.js ' >> /root/.emcc-php-wasm-flags; \
 	fi; \
-	if [ "${WITH_SOURCEMAPS}" = "yes" ]; then \
-		echo -n ' -g3 -gsource-map' >> /root/.emcc-php-wasm-flags; \
-		# Ensure source maps are loaded from the correct URL on the web.
-		# Without this, browsers will try the wasm:// protocol and never load the source map.
-		if [ "$EMSCRIPTEN_ENVIRONMENT" = "web" ]; then \
-			export PHP_VERSION_ESCAPED="${PHP_VERSION//./_}"; \
-			echo -n " --source-map-base http://127.0.0.1:5400/@fs${OUTPUT_DIR_FOR_SOURCE_MAP_BASE}/${PHP_VERSION_ESCAPED}/" >> /root/.emcc-php-wasm-flags; \
+	if [ "${WITH_SOURCEMAPS}" = "yes" ] || [ "${WITH_DEBUG}" = "yes" ]; then \
+		echo -n ' -g3 ' >> /root/.emcc-php-wasm-flags; \
+		if [ "${WITH_SOURCEMAPS}" = "yes" ]; then \
+			echo -n ' -gsource-map' >> /root/.emcc-php-wasm-flags; \
+			# Ensure source maps are loaded from the correct URL on the web.
+			# Without this, browsers will try the wasm:// protocol and never load the source map.
+			if [ "$EMSCRIPTEN_ENVIRONMENT" = "web" ]; then \
+				export PHP_VERSION_ESCAPED="${PHP_VERSION//./_}"; \
+				echo -n " --source-map-base http://127.0.0.1:5400/@fs${OUTPUT_DIR_FOR_SOURCE_MAP_BASE}/${PHP_VERSION_ESCAPED}/" >> /root/.emcc-php-wasm-flags; \
+			fi; \
 		fi; \
 	else \
 		# Preserve symbol names in node.js build – the bundle size doesn't matter as much
@@ -957,6 +962,7 @@ export ASYNCIFY_ONLY=$'"zif_phar_fopen",\
 RUN mkdir /root/output
 COPY ./php/phpwasm-emscripten-library.js /root/phpwasm-emscripten-library.js
 ARG WITH_SOURCEMAPS
+ARG WITH_DEBUG
 RUN set -euxo pipefail; \
 	mkdir -p /build/output; \
 	source /root/emsdk/emsdk_env.sh; \
@@ -996,7 +1002,7 @@ RUN set -euxo pipefail; \
 "_wasm_set_request_uri", \n\
 "_wasm_set_skip_shebang" '"$(cat /root/.EXPORTED_FUNCTIONS)"']'; \
 	export OPTIMIZATION_FLAGS="-O3"; \
-	if [ "${WITH_SOURCEMAPS}" = "yes" ]; then \
+	if [ "${WITH_SOURCEMAPS}" = "yes" ] || [ "${WITH_DEBUG}" = "yes" ]; then \
 		export OPTIMIZATION_FLAGS="-O0"; \
 	fi; \
 	emcc $OPTIMIZATION_FLAGS \
@@ -1156,6 +1162,9 @@ RUN set -euxo pipefail; \
 			# Make the source map paths relative to the .wasm file, not the build directory
 			sed -i 's#"\.\./\.\./root/#"#g' /root/output/php.wasm.map; \
 			mv /root/output/php.wasm.map "/root/output/${PHP_VERSION_ESCAPED}/php.wasm.map"; \
+		fi; \
+		if [ "${WITH_SOURCEMAPS}" = "yes" ] || [ "${WITH_DEBUG}" = "yes" ]; then \
+			# Make PHP source available for use with step debugger
 			rm -rf /root/php-src/.git; \
 			cp -r /root/php-src "/root/output/${PHP_VERSION_ESCAPED}/php-src"; \
 			cp -r /root/emsdk/upstream/emscripten/system "/root/output/${PHP_VERSION_ESCAPED}/php-src/system"; \
