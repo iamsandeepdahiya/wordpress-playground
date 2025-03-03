@@ -45,27 +45,30 @@ jobs:
                   echo "${{ secrets.DEPLOY_WEBSITE_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
                   chmod 0600 ~/.ssh/*
 
+                  # Add site privacy script to the website build
+                  cp packages/playground/website-deployment/a8c/site-privacy.php \
+                    dist/packages/playground/wasm-wordpress-net/
+
                   # Website files
                   rsync -avz -e "ssh -i ~/.ssh/id_ed25519" --delete \
                     dist/packages/playground/wasm-wordpress-net/ \
                     ${{ secrets.DEPLOY_WEBSITE_TARGET_USER }}@${{ secrets.DEPLOY_WEBSITE_TARGET_HOST }}:'~/updated-playground-files'
+
+                  # Include MIME types for use with PHP-served files
+                  cp packages/php-wasm/universal/src/lib/mime-types.json \
+                    packages/playground/website-deployment/
 
                   # Host-specific deployment scripts and server config
                   rsync -avz -e "ssh -i ~/.ssh/id_ed25519" --delete \
                     packages/playground/website-deployment/ \
                     ${{ secrets.DEPLOY_WEBSITE_TARGET_USER }}@${{ secrets.DEPLOY_WEBSITE_TARGET_HOST }}:'~/website-deployment'
 
-                  # Copy MIME types for use with PHP-served files
-                  rsync -avz -e "ssh -i ~/.ssh/id_ed25519" \
-                    packages/php-wasm/universal/src/lib/mime-types.json \
-                    ${{ secrets.DEPLOY_WEBSITE_TARGET_USER }}@${{ secrets.DEPLOY_WEBSITE_TARGET_HOST }}:'~/website-deployment/'
-
                   # Apply update
                   ssh -i ~/.ssh/id_ed25519 \
                     ${{ secrets.DEPLOY_WEBSITE_TARGET_USER }}@${{ secrets.DEPLOY_WEBSITE_TARGET_HOST }} \
                     -tt '~/website-deployment/apply-update.sh'
 
-                  # Require A8C proxy for private web app
+                  # Enforce privacy for web app
                   ssh -i ~/.ssh/id_ed25519 \
                     ${{ secrets.DEPLOY_WEBSITE_TARGET_USER }}@${{ secrets.DEPLOY_WEBSITE_TARGET_HOST }} \
-                    -tt 'sed -i "2i if ( \"cli\" !== php_sapi_name() && empty( \$_SERVER[\"A8C_PROXIED_REQUEST\"] ) ) { http_response_code( 401 ); echo \"Unauthorized. Please proxy.\"; die(); }" ~/htdocs/custom-redirects.php'
+                    -tt 'sed -i "2i if ( \"cli\" !== php_sapi_name() ) { require_once __DIR__ . \"/site-privacy.php\"; Site_Privacy::enforce();	}" ~/htdocs/custom-redirects.php'
