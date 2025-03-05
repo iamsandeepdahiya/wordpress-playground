@@ -263,17 +263,6 @@ export async function setupPlatformLevelMuPlugins(php: UniversalPHP) {
 			}
 			set_error_handler(function($severity, $message, $file, $line) use($playground_consts) {
 				/**
-				 * This is a temporary workaround to hide the 32bit integer warnings that
-				 * appear when using various time related function, such as strtotime and mktime.
-				 * Examples of the warnings that are displayed:
-				 *
-				 * Warning: mktime(): Epoch doesn't fit in a PHP integer in <file>
-				 * Warning: strtotime(): Epoch doesn't fit in a PHP integer in <file>
-				 */
-				if (strpos($message, "fit in a PHP integer") !== false) {
-					return;
-				}
-				/**
 				 * Networking support in Playground registers a http_api_transports filter.
 				 *
 				 * This filter is deprecated, and no longer actively used, but is needed for wp_http_supports().
