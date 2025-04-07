@@ -43,6 +43,7 @@ export interface RunCLIArgs {
 	port?: number;
 	quiet?: boolean;
 	skipWordPressSetup?: boolean;
+	skipSqliteSetup?: boolean;
 	wp?: string;
 }
 
@@ -265,7 +266,9 @@ export async function runCLI(args: RunCLIArgs): Promise<RunCLIServer> {
 				createPhpRuntime: async () =>
 					await loadNodeRuntime(compiledBlueprint.versions.php),
 				wordPressZip,
-				sqliteIntegrationPluginZip: fetchSqliteIntegration(monitor),
+				sqliteIntegrationPluginZip: args.skipSqliteSetup
+					? undefined
+					: fetchSqliteIntegration(monitor),
 				sapiName: 'cli',
 				createFiles: {
 					'/internal/shared/ca-bundle.crt':
