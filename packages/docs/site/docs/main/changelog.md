@@ -14,18 +14,18 @@ format.
 
 ### Bug Fixes
 
-- Fix changelog workflow and backfill changelog entries from recent versions.
+- Fix changelog workflow and backfill changelog entries from recent versions. ([#83](https://github.com/Automattic/wordpress-playground-private/pull/83))
 
 ### Various
 
-- Consider unexpected undefined symbols to be errors.
-- Ignore ca-bundle created by @php-wasm/cli.
-- Support Node.js args to built-script executor.
-- Support quickly testing php-wasm CLI changes with bun.
-- Update Emscripten version to 4.0.5.
-- Update Playground Node version to 20.9.0.
-- Upgrade express to 4.21.2.
-- [PHP-wasm] Use statfs from NODEFS in the Node version.
+- Consider unexpected undefined symbols to be errors. ([#86](https://github.com/Automattic/wordpress-playground-private/pull/86))
+- Ignore ca-bundle created by @php-wasm/cli. ([#88](https://github.com/Automattic/wordpress-playground-private/pull/88))
+- Support Node.js args to built-script executor. ([#92](https://github.com/Automattic/wordpress-playground-private/pull/92))
+- Support quickly testing php-wasm CLI changes with bun. ([#85](https://github.com/Automattic/wordpress-playground-private/pull/85))
+- Update Emscripten version to 4.0.5. ([#93](https://github.com/Automattic/wordpress-playground-private/pull/93))
+- Update Playground Node version to 20.9.0. ([#89](https://github.com/Automattic/wordpress-playground-private/pull/89))
+- Upgrade express to 4.21.2. ([#90](https://github.com/Automattic/wordpress-playground-private/pull/90))
+- [PHP-wasm] Use statfs from NODEFS in the Node version. ([#94](https://github.com/Automattic/wordpress-playground-private/pull/94))
 
 ### Contributors
 
