@@ -1,4 +1,5 @@
-import { PHPResponse, PHPResponseData } from '@php-wasm/universal';
+import type { PHPResponseData } from '@php-wasm/universal';
+import { PHPResponse } from '@php-wasm/universal';
 import * as Comlink from 'comlink';
 
 export type WithAPIState = {

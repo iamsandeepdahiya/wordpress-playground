@@ -1,6 +1,6 @@
 import { Semaphore } from '@php-wasm/util';
 import { Octokit } from 'octokit';
-import { Changeset } from './changeset';
+import type { Changeset } from './changeset';
 
 export type GithubClient = ReturnType<typeof createClient>;
 

@@ -1,10 +1,10 @@
-import { MessageListener } from '@php-wasm/universal';
+import type { MessageListener } from '@php-wasm/universal';
+import type { SyncProgressCallback } from '@php-wasm/web';
 import {
 	spawnPHPWorkerThread,
 	exposeAPI,
 	consumeAPI,
 	setupPostMessageRelay,
-	SyncProgressCallback,
 } from '@php-wasm/web';
 
 import type {
@@ -14,7 +14,8 @@ import type {
 } from './worker-thread';
 export type { MountDescriptor, WorkerBootOptions };
 import type { WebClientMixin } from './playground-client';
-import ProgressBar, { ProgressBarOptions } from './progress-bar';
+import type { ProgressBarOptions } from './progress-bar';
+import ProgressBar from './progress-bar';
 
 // Avoid literal "import.meta.url" on purpose as vite would attempt
 // to resolve it during build time. This should specifically be
@@ -28,7 +29,7 @@ export const workerUrl: string = new URL(moduleWorkerUrl, origin) + '';
 
 // @ts-ignore
 import serviceWorkerPath from '../../service-worker.ts?worker&url';
-import { FilesystemOperation } from '@php-wasm/fs-journal';
+import type { FilesystemOperation } from '@php-wasm/fs-journal';
 import { setupFetchNetworkTransport } from './setup-fetch-network-transport';
 import { logger } from '@php-wasm/logger';
 import { PhpWasmError } from '@php-wasm/util';

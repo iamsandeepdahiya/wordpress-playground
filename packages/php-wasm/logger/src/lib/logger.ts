@@ -23,18 +23,25 @@ export type LogSeverity = 'Debug' | 'Info' | 'Warn' | 'Error' | 'Fatal';
 export type LogPrefix = 'WASM Crash' | 'PHP' | 'JavaScript';
 
 /**
+ * Log handler.
+ */
+export type LogHandler = (log: Log, ...args: any[]) => void;
+
+/**
  * A logger for Playground.
  */
 export class Logger extends EventTarget {
 	public readonly fatalErrorEvent = 'playground-fatal-error';
+	private readonly handlers: LogHandler[];
 
 	// constructor
 	constructor(
 		// Log handlers
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-		private readonly handlers: Function[] = []
+		handlers: LogHandler[] = []
 	) {
 		super();
+		this.handlers = handlers;
 	}
 
 	/**

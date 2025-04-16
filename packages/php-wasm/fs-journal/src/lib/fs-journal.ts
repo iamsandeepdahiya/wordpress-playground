@@ -1,4 +1,5 @@
-import { PHP, UniversalPHP, __private__dont__use } from '@php-wasm/universal';
+import type { PHP, UniversalPHP } from '@php-wasm/universal';
+import { __private__dont__use } from '@php-wasm/universal';
 import { Semaphore, basename, joinPaths } from '@php-wasm/util';
 import { logger } from '@php-wasm/logger';
 

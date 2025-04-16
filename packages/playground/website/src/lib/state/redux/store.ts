@@ -1,21 +1,21 @@
 import { configureStore, createSelector } from '@reduxjs/toolkit';
+import type { SiteError } from './slice-ui';
 import uiReducer, {
 	__internal_uiSlice,
 	listenToOnlineOfflineEventsMiddleware,
-	SiteError,
 } from './slice-ui';
+import type { SiteInfo } from './slice-sites';
 import sitesReducer, {
 	selectSiteBySlug,
 	selectTemporarySites,
-	SiteInfo,
 } from './slice-sites';
 import { PlaygroundRoute, redirectTo } from '../url/router';
-import clientsReducer, {
-	ClientInfo,
-	selectAllClientInfo,
-} from './slice-clients';
+import type { ClientInfo } from './slice-clients';
+import clientsReducer, { selectAllClientInfo } from './slice-clients';
 import { useDispatch, useSelector } from 'react-redux';
 
+// NOTE: A GetDefaultMiddleware type is not exported from @reduxjs/toolkit,
+// so we have to derive it from the configureStore() signature.
 type ConfigureStoreOptions<T> = Parameters<typeof configureStore<T>>[0];
 type ConfigureStoreOptionsMiddleware<T> = NonNullable<
 	ConfigureStoreOptions<T>['middleware']

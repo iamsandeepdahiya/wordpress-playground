@@ -1,7 +1,7 @@
 import { PHPResponse } from './php-response';
 import { getLoadedRuntime } from './load-php-runtime';
 import type { PHPRuntimeId } from './load-php-runtime';
-import {
+import type {
 	MessageListener,
 	PHPRequest,
 	PHPRequestHeaders,
@@ -10,30 +10,33 @@ import {
 	PHPEventListener,
 	PHPEvent,
 } from './universal-php';
-import { RmDirOptions, ListFilesOptions, FSHelpers } from './fs-helpers';
+import type { RmDirOptions, ListFilesOptions } from './fs-helpers';
+import { FSHelpers } from './fs-helpers';
+import type { UnhandledRejectionsTarget } from './wasm-error-reporting';
 import {
 	getFunctionsMaybeMissingFromAsyncify,
 	improveWASMErrorReporting,
-	UnhandledRejectionsTarget,
 } from './wasm-error-reporting';
 import { Semaphore, createSpawnHandler, joinPaths } from '@php-wasm/util';
-import { PHPRequestHandler } from './php-request-handler';
+import type { PHPRequestHandler } from './php-request-handler';
 import { logger } from '@php-wasm/logger';
 import { isExitCodeZero } from './is-exit-code-zero';
-import { Emscripten } from './emscripten-types';
+import type { Emscripten } from './emscripten-types';
 
 const STRING = 'string';
 const NUMBER = 'number';
 
 export const __private__dont__use = Symbol('__private__dont__use');
 
+type ErrorSource = 'request' | 'php-wasm';
 export class PHPExecutionFailureError extends Error {
-	constructor(
-		message: string,
-		public response: PHPResponse,
-		public source: 'request' | 'php-wasm'
-	) {
+	response: PHPResponse;
+	source: ErrorSource;
+
+	constructor(message: string, response: PHPResponse, source: ErrorSource) {
 		super(message);
+		this.response = response;
+		this.source = source;
 	}
 }
 

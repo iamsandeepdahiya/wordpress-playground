@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as zlib from 'zlib';
-import { ExecutorContext, joinPathFragments, logger } from '@nx/devkit';
-import { PackageForSelfHostingExecutorSchema } from './schema';
+import type { ExecutorContext } from '@nx/devkit';
+import { joinPathFragments, logger } from '@nx/devkit';
+import type { PackageForSelfHostingExecutorSchema } from './schema';
 import * as tar from 'tar-fs';
 
 export default async function packageForSelfHostingExecutor(

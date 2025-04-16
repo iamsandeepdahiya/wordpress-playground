@@ -4,7 +4,7 @@ import {
 	OverlayFilesystem,
 	ZipFilesystem,
 } from '@wp-playground/storage';
-import { BlueprintBundle } from './blueprint';
+import type { BlueprintBundle } from './blueprint';
 
 /**
  * Resolves a remote blueprint from a URL.

@@ -5,16 +5,13 @@ import {
 	removePathPrefix,
 	DEFAULT_BASE_URL,
 } from './urls';
-import { PHP, PHPExecutionFailureError, normalizeHeaders } from './php';
+import type { PHP, PHPExecutionFailureError } from './php';
+import { normalizeHeaders } from './php';
 import { PHPResponse } from './php-response';
-import { PHPRequest, PHPRunOptions } from './universal-php';
+import type { PHPRequest, PHPRunOptions } from './universal-php';
 import { encodeAsMultipart } from './encode-as-multipart';
-import {
-	MaxPhpInstancesError,
-	PHPFactoryOptions,
-	PHPProcessManager,
-	SpawnedPHP,
-} from './php-process-manager';
+import type { PHPFactoryOptions, SpawnedPHP } from './php-process-manager';
+import { MaxPhpInstancesError, PHPProcessManager } from './php-process-manager';
 import { HttpCookieStore } from './http-cookie-store';
 import mimeTypes from './mime-types.json';
 

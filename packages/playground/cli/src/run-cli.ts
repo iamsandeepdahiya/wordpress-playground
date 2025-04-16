@@ -1,26 +1,25 @@
 import { errorLogPath, logger } from '@php-wasm/logger';
 import { createNodeFsMountHandler, loadNodeRuntime } from '@php-wasm/node';
 import { EmscriptenDownloadMonitor, ProgressTracker } from '@php-wasm/progress';
-import {
+import type {
 	PHP,
 	PHPRequest,
 	PHPRequestHandler,
-	PHPResponse,
 	SupportedPHPVersion,
 } from '@php-wasm/universal';
-import {
+import { PHPResponse } from '@php-wasm/universal';
+import type {
 	BlueprintDeclaration,
 	BlueprintBundle,
-	compileBlueprint,
-	runBlueprintSteps,
 } from '@wp-playground/blueprints';
+import { compileBlueprint, runBlueprintSteps } from '@wp-playground/blueprints';
 import { RecommendedPHPVersion, zipDirectory } from '@wp-playground/common';
 import {
 	bootWordPress,
 	resolveWordPressRelease,
 } from '@wp-playground/wordpress';
 import fs from 'fs';
-import { Server } from 'http';
+import type { Server } from 'http';
 import path from 'path';
 import { rootCertificates } from 'tls';
 import {

@@ -1,14 +1,14 @@
+import type { Filesystem } from './filesystems';
 import {
 	InMemoryFilesystem,
 	ZipFilesystem,
 	OverlayFilesystem,
 	FetchFilesystem,
-	Filesystem,
 	NodeJsFilesystem,
 } from './filesystems';
 import { StreamedFile } from '@php-wasm/stream-compression';
-import { FileTree } from '@php-wasm/universal';
-import { BlobReader, ZipReader } from '@zip.js/zip.js';
+import type { FileTree } from '@php-wasm/universal';
+import type { BlobReader, ZipReader } from '@zip.js/zip.js';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import path from 'path';
 

@@ -12,7 +12,7 @@ import * as util from 'node:util';
 import * as net from 'net';
 import * as http from 'http';
 import { WebSocketServer } from 'ws';
-import { debugLog } from './utils.js';
+import { debugLog } from './utils';
 
 function log(...args: any[]) {
 	debugLog('[WS Server]', ...args);

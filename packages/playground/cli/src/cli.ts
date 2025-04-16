@@ -3,7 +3,8 @@ import { SupportedPHPVersions } from '@php-wasm/universal';
 import { RecommendedPHPVersion } from '@wp-playground/common';
 import yargs from 'yargs';
 import { isValidWordPressSlug } from './is-valid-wordpress-slug';
-import { runCLI, RunCLIArgs } from './run-cli';
+import type { RunCLIArgs } from './run-cli';
+import { runCLI } from './run-cli';
 import { resolveBlueprint } from './resolve-blueprint';
 import { ReportableError } from './reportable-error';
 

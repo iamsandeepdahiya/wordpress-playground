@@ -6,8 +6,9 @@
  */
 
 import metadataWorkerUrl from './opfs-site-storage-worker-for-safari?worker&url';
-import { createSiteMetadata, SiteMetadata } from '../../site-metadata';
-import { SiteInfo } from '../redux/slice-sites';
+import type { SiteMetadata } from '../../site-metadata';
+import { createSiteMetadata } from '../../site-metadata';
+import type { SiteInfo } from '../redux/slice-sites';
 import { joinPaths } from '@php-wasm/util';
 import { logger } from '@php-wasm/logger';
 import { getBlueprintDeclaration } from '@wp-playground/blueprints';
@@ -48,7 +49,10 @@ try {
 }
 
 class OpfsSiteStorage {
-	constructor(private readonly root: FileSystemDirectoryHandle) {}
+	private readonly root: FileSystemDirectoryHandle;
+	constructor(root: FileSystemDirectoryHandle) {
+		this.root = root;
+	}
 
 	async create(slug: string, metadata: SiteMetadata): Promise<void> {
 		const newSiteDirName = getDirectoryNameForSlug(slug);

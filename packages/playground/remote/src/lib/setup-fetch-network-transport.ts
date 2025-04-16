@@ -1,4 +1,4 @@
-import { UniversalPHP } from '@php-wasm/universal';
+import type { UniversalPHP } from '@php-wasm/universal';
 import { fetchWithCorsProxy } from '@php-wasm/web';
 import { defineWpConfigConsts } from '@wp-playground/blueprints';
 

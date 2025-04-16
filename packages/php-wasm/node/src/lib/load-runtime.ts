@@ -1,11 +1,11 @@
-import {
+import type {
 	SupportedPHPVersion,
-	loadPHPRuntime,
 	EmscriptenOptions,
 } from '@php-wasm/universal';
+import { loadPHPRuntime } from '@php-wasm/universal';
 
 import { getPHPLoaderModule } from '.';
-import { withNetworking } from './networking/with-networking.js';
+import { withNetworking } from './networking/with-networking';
 
 export interface PHPLoaderOptions {
 	emscriptenOptions?: EmscriptenOptions;
