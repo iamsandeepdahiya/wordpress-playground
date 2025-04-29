@@ -4,6 +4,33 @@ All notable changes to this project are documented in this file by a CI job
 that runs on every NPM release. The file follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 format.
 
+## [v1.0.31] (2025-04-29) 
+
+### Bug Fixes
+
+- Fix changelog version order. ([#100](https://github.com/Automattic/wordpress-playground-private/pull/100))
+- Fix openssl library paths in php-wasm build. ([#102](https://github.com/Automattic/wordpress-playground-private/pull/102))
+
+### Various
+
+- Add private fork links to the changelog. ([#98](https://github.com/Automattic/wordpress-playground-private/pull/98))
+- Allow public access to A8C Playground instance. ([#119](https://github.com/Automattic/wordpress-playground-private/pull/119))
+- Make php-wasm and Playground CLI's fast to run with Node.js. ([#107](https://github.com/Automattic/wordpress-playground-private/pull/107))
+- Playground CLI: Add `skipSqliteSetup` flag for MySQL support. ([#97](https://github.com/Automattic/wordpress-playground-private/pull/97))
+- Prep the WP update workflows to be re-enabled. ([#110](https://github.com/Automattic/wordpress-playground-private/pull/110))
+- Support building for additional remote origins. ([#122](https://github.com/Automattic/wordpress-playground-private/pull/122))
+- Tweak Blueprint test string to match WP 6.8. ([#117](https://github.com/Automattic/wordpress-playground-private/pull/117))
+- Update Nx, Vite, and ESLint dependencies. ([#35](https://github.com/Automattic/wordpress-playground-private/pull/35))
+- Upgrade octokit to 3.1.2 to fix vulnerability. ([#106](https://github.com/Automattic/wordpress-playground-private/pull/106))
+- Use Node as the Vitest environment. ([#96](https://github.com/Automattic/wordpress-playground-private/pull/96))
+
+### Contributors
+
+The following contributors merged PRs in this release:
+
+@bgrgicak @brandonpayton @ivan-ottinger @wojtekn
+
+
 ## [v1.0.30] (2025-04-07)
 
 ### Bug Fixes
