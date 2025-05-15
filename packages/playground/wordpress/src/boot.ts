@@ -24,6 +24,7 @@ import {
 } from '.';
 import { joinPaths } from '@php-wasm/util';
 import { logger } from '@php-wasm/logger';
+import { ensureRequiredWpConfigConstants } from './rewrite-wp-config';
 
 export type PhpIniOptions = Record<string, string>;
 export type Hook = (php: PHP) => void | Promise<void>;
@@ -219,6 +220,16 @@ export async function bootWordPress(options: BootOptions) {
 
 	php.defineConstant('WP_HOME', options.siteUrl);
 	php.defineConstant('WP_SITEURL', options.siteUrl);
+
+	/*
+	 * Add required constants to "wp-config.php" if they are not already defined.
+	 * This is needed, because some WordPress backups and exports may not include
+	 * definitions for some of the necessary constants.
+	 */
+	await ensureRequiredWpConfigConstants(
+		php,
+		joinPaths(requestHandler.documentRoot, 'wp-config.php')
+	);
 
 	// Run "before database" hooks to mount/copy more files in
 	if (options.hooks?.beforeDatabaseSetup) {

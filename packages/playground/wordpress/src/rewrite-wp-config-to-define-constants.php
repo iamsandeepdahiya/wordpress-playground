@@ -63,11 +63,17 @@
  *     })(), 123);
  * }
  * ```
- * 
- * @param mixed $content
+ *
+ * @param mixed $content              A PHP file content.
+ * @param array $constants            An array of constants to define.
+ * @param bool  $when_already_defined Optional. What to do if the constant is already defined.
+ *                                    Possible values are:
+ *                                      'rewrite' - Rewrite the constant, using the new value.
+ *                                      'skip'    - Skip the definition, keeping the existing value.
+ *                                    Default: 'rewrite'
  * @return string
  */
-function rewrite_wp_config_to_define_constants($content, $constants = [])
+function rewrite_wp_config_to_define_constants($content, $constants = [], $when_already_defined = 'rewrite')
 {
     $tokens = array_reverse(token_get_all($content));
     $output = [];
@@ -259,6 +265,14 @@ function rewrite_wp_config_to_define_constants($content, $constants = [])
         // we can ignore it.
         if (!array_key_exists($name, $constants)) {
             $output = array_merge($output, $buffer);
+            continue;
+        }
+
+        // If "$when_already_defined" is set to 'skip', ignore the definition, and
+		// remove the constant from the list so it doesn't get added to the output.
+        if ('skip' === $when_already_defined) {
+            $output = array_merge($output, $buffer);
+            unset($constants[$name]);
             continue;
         }
 
