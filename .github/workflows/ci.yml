@@ -23,9 +23,28 @@ jobs:
             - uses: ./.github/actions/prepare-playground
             - run: npx nx affected --target=lint
             - run: npx nx affected --target=typecheck
-    test-unit-asyncify-node-1-out-of-7:
+    test-unit-asyncify:
         runs-on: wordpress-playground-private
         needs: [lint-and-typecheck]
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - name: test-unit-asyncify (1/7)
+                      target: test
+                    - name: test-unit-asyncify (2/7)
+                      target: test-php
+                    - name: test-unit-asyncify (3/7)
+                      target: test-php-asyncify-file-get-contents
+                    - name: test-unit-asyncify (4/7)
+                      target: test-php-asyncify-fopen
+                    - name: test-unit-asyncify (5/7)
+                      target: test-php-asyncify-fsockopen
+                    - name: test-unit-asyncify (6/7)
+                      target: test-php-asyncify-gethostbyname
+                    - name: test-unit-asyncify (7/7)
+                      target: test-php-asyncify-mysqli
+        name: ${{ matrix.name }}
         services:
             mysql:
                 image: mysql:5.7
@@ -48,97 +67,11 @@ jobs:
             - uses: ./.github/actions/prepare-playground
               with:
                   node-version: 20
-            - run: node --expose-gc node_modules/nx/bin/nx affected --target=test --configuration=ci
+            - run: node --expose-gc node_modules/nx/bin/nx affected --target=${{ matrix.target }}
               env:
                   MYSQL_DATABASE: test_db
                   MYSQL_USER: user
                   MYSQL_PASSWORD: password
-    test-unit-asyncify-node-2-out-of-7:
-        runs-on: wordpress-playground-private
-        needs: [lint-and-typecheck]
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: true
-            - uses: ./.github/actions/prepare-playground
-              with:
-                  node-version: 20
-            - run: node --expose-gc node_modules/nx/bin/nx affected --target=test-php
-    test-unit-asyncify-node-3-out-of-7:
-        runs-on: wordpress-playground-private
-        needs: [lint-and-typecheck]
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: true
-            - uses: ./.github/actions/prepare-playground
-              with:
-                  node-version: 20
-            - run: node --expose-gc node_modules/nx/bin/nx affected --target=test-php-asyncify-file-get-contents
-    test-unit-asyncify-node-4-out-of-7:
-        runs-on: wordpress-playground-private
-        needs: [lint-and-typecheck]
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: true
-            - uses: ./.github/actions/prepare-playground
-              with:
-                  node-version: 20
-            - run: node --expose-gc node_modules/nx/bin/nx affected --target=test-php-asyncify-fopen
-    test-unit-asyncify-node-5-out-of-7:
-        runs-on: wordpress-playground-private
-        needs: [lint-and-typecheck]
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: true
-            - uses: ./.github/actions/prepare-playground
-              with:
-                  node-version: 20
-            - run: node --expose-gc node_modules/nx/bin/nx affected --target=test-php-asyncify-fsockopen
-    test-unit-asyncify-node-6-out-of-7:
-        runs-on: wordpress-playground-private
-        needs: [lint-and-typecheck]
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: true
-            - uses: ./.github/actions/prepare-playground
-              with:
-                  node-version: 20
-            - run: node --expose-gc node_modules/nx/bin/nx affected --target=test-php-asyncify-gethostbyname
-    test-unit-asyncify-node-7-out-of-7:
-        runs-on: wordpress-playground-private
-        needs: [lint-and-typecheck]
-        services:
-            mysql:
-                image: mysql:5.7
-                env:
-                    MYSQL_DATABASE: test_db
-                    MYSQL_USER: user
-                    MYSQL_PASSWORD: password
-                    MYSQL_ROOT_PASSWORD: rootpassword
-                ports:
-                    - 3306:3306
-                options: >-
-                    --health-cmd="mysqladmin ping --silent"
-                    --health-interval=10s
-                    --health-timeout=5s
-                    --health-retries=3
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: true
-            - uses: ./.github/actions/prepare-playground
-              with:
-                  node-version: 20
-            - run: node --expose-gc node_modules/nx/bin/nx affected --target=test-php-asyncify-mysqli
-              env:
-                  MYSQL_DATABASE: test_db
-                  MYSQL_USER: user
-                  MYSQL_PASSWORD: password
-
     # Most of these tests pass locally but the process is crashing
     # on the CI runner.
     #
@@ -308,18 +241,7 @@ jobs:
             github.ref == 'refs/heads/trunk' &&
             github.event_name == 'push'
         # Add a dependency to the build job
-        needs:
-            [
-                test-unit-asyncify-node-1-out-of-7,
-                test-unit-asyncify-node-2-out-of-7,
-                test-unit-asyncify-node-3-out-of-7,
-                test-unit-asyncify-node-4-out-of-7,
-                test-unit-asyncify-node-5-out-of-7,
-                test-unit-asyncify-node-6-out-of-7,
-                test-unit-asyncify-node-7-out-of-7,
-                test-e2e,
-                build,
-            ]
+        needs: [test-unit-asyncify, test-e2e, build]
         name: 'Deploy doc site'
 
         # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
