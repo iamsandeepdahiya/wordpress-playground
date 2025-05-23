@@ -121,14 +121,16 @@ let lastRuntimeId = 0;
  *
  * @public
  * @param  phpLoaderModule         - The ESM-wrapped Emscripten module. Consult the Dockerfile for the build process.
- * @param  phpModuleArgs           - The Emscripten module arguments, see https://emscripten.org/docs/api_reference/module.html#affecting-execution.
+ * @param  options                 - The Emscripten module arguments, see https://emscripten.org/docs/api_reference/module.html#affecting-execution.
  * @returns Loaded runtime id.
  */
 
 export async function loadPHPRuntime(
 	phpLoaderModule: PHPLoaderModule,
-	phpModuleArgs: EmscriptenOptions = {}
+	...options: EmscriptenOptions[]
 ): Promise<number> {
+	const phpModuleArgs = Object.assign({}, ...options);
+
 	const [phpReady, resolvePHP, rejectPHP] = makePromise();
 
 	const PHPRuntime = phpLoaderModule.init(currentJsRuntime, {
@@ -147,7 +149,7 @@ export async function loadPHPRuntime(
 		noInitialRun: true,
 		onRuntimeInitialized() {
 			if (phpModuleArgs.onRuntimeInitialized) {
-				phpModuleArgs.onRuntimeInitialized();
+				phpModuleArgs.onRuntimeInitialized(PHPRuntime);
 			}
 			resolvePHP();
 		},
@@ -172,6 +174,7 @@ export async function loadPHPRuntime(
 
 	PHPRuntime[RuntimeId] = id;
 	loadedRuntimes.set(id, PHPRuntime);
+
 	return id;
 }
 
@@ -241,7 +244,7 @@ export type EmscriptenOptions = {
 	print?: (message: string) => void;
 	printErr?: (message: string) => void;
 	quit?: (status: number, toThrow: any) => void;
-	onRuntimeInitialized?: () => void;
+	onRuntimeInitialized?: (phpRuntime: PHPRuntime) => void;
 	monitorRunDependencies?: (left: number) => void;
 	onMessage?: (listener: EmscriptenMessageListener) => void;
 	outboundNetworkProxyServer?: Server<

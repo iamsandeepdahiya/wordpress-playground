@@ -33,37 +33,13 @@ const phpVersions =
 	'PHP' in process.env ? [process.env['PHP']] : SupportedPHPVersions;
 
 describe.each(phpVersions)('PHP %s – asyncify', (phpVersion) => {
-	const topOfTheStack: Array<string> = [
-		// http:// stream handler
-		`file_get_contents(${js['httpUrl']});`,
-
-		`$fp = fopen(${js['httpUrl']}, "r");
-		 fread($fp, 1024);
-		 fclose($fp);`,
-		// `getimgsize(${js['httpUrl']});`,
-
-		// Network functions from https://www.php.net/manual/en/book.network.php
-		`$fp = fsockopen(${js['host']}, ${js['port']});
-		 fwrite($fp, "GET / HTTP/1.1\\r\\n\\r\\n");
-		 fread($fp, 10);
-		 fclose($fp);`,
-		`gethostbyname(${js['httpUrl']});`,
-
-		// @TODO:
-
-		// https:// stream handler
-		// MySQL functions from https://www.php.net/manual/en/book.mysql.php
-		// PDO functions from https://www.php.net/manual/en/book.pdo.php
-		// Sockets functions from https://www.php.net/manual/en/book.sockets.php
-	];
-
 	let php: PHP;
 	beforeEach(async () => {
 		php = new PHP(await loadNodeRuntime(phpVersion as any));
 		await setPhpIniEntries(php, { allow_url_fopen: 1 });
 	});
 
-	describe.each(topOfTheStack)('%s', (networkCall) => {
+	describe(`file_get_contents(${js['httpUrl']});`, (networkCall) => {
 		test('Direct call', () => assertNoCrash(` ${networkCall}`));
 		describe('Function calls', () => {
 			test('Simple call', () =>

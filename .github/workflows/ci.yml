@@ -26,6 +26,27 @@ jobs:
     test-unit-asyncify:
         runs-on: ubuntu-latest
         needs: [lint-and-typecheck]
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - name: test-unit-asyncify (1/8)
+                      target: test-node
+                    - name: test-unit-asyncify (2/8)
+                      target: test-php
+                    - name: test-unit-asyncify (3/8)
+                      target: test-php-request-handler-files
+                    - name: test-unit-asyncify (4/8)
+                      target: test-php-request-handler-requests
+                    - name: test-unit-asyncify (5/8)
+                      target: test-php-asyncify-file-get-contents
+                    - name: test-unit-asyncify (6/8)
+                      target: test-php-asyncify-fopen
+                    - name: test-unit-asyncify (7/8)
+                      target: test-php-asyncify-fsockopen
+                    - name: test-unit-asyncify (8/8)
+                      target: test-php-asyncify-gethostbyname
+        name: ${{ matrix.name }}
         steps:
             - uses: actions/checkout@v4
               with:
@@ -33,7 +54,7 @@ jobs:
             - uses: ./.github/actions/prepare-playground
               with:
                   node-version: 22
-            - run: node --expose-gc node_modules/nx/bin/nx affected --target=test --configuration=ci
+            - run: node --expose-gc node_modules/nx/bin/nx affected --target=${{ matrix.target }} --configuration=ci
     # Most of these tests pass locally but the process is crashing
     # on the CI runner.
     #
@@ -126,7 +147,7 @@ jobs:
                   path: packages/playground/website/playwright/e2e/deployment.spec.ts-snapshots/
                   if-no-files-found: ignore
             - name: Delete playwright-dist artifact
-              uses: geekyeggo/delete-artifact@v2
+              uses: geekyeggo/delete-artifact@v5
               with:
                   name: playwright-dist
 

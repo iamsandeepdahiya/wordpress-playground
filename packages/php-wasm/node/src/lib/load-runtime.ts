@@ -6,6 +6,7 @@ import {
 
 import { getPHPLoaderModule } from '.';
 import { withNetworking } from './networking/with-networking.js';
+import { withICUData } from './data/with-icu-data.js';
 
 export interface PHPLoaderOptions {
 	emscriptenOptions?: EmscriptenOptions;
@@ -33,8 +34,10 @@ export async function loadNodeRuntime(
 		},
 		...(options.emscriptenOptions || {}),
 	};
+
 	return await loadPHPRuntime(
 		await getPHPLoaderModule(phpVersion),
-		await withNetworking(emscriptenOptions)
+		await withNetworking(emscriptenOptions),
+		await withICUData(emscriptenOptions)
 	);
 }

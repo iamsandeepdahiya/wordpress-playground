@@ -19,6 +19,11 @@ RUN git clone https://github.com/php/php-src.git php-src \
 # Work around memory leak due to PHP using Emscripten's incomplete mmap/munmap support
 COPY ./php-wasm-memory-storage /root/php-src/ext/wasm_memory_storage
 
+# Work around to add ICU FLAGS to intl below 7.3 to inject -fPIC.
+RUN if [[ "${PHP_VERSION:0:1}" -eq "7" && "${PHP_VERSION:2:1}" -eq "2" ]]; then \
+		sed -i "s/\$ICU_INCS/\$ICU_INCS \$ICU_CFLAGS/" /root/php-src/ext/intl/config.m4; \
+	fi;
+
 RUN cd php-src && ./buildconf --force
 
 # Bring in the libraries
@@ -34,6 +39,7 @@ COPY ./libsqlite3/ /root/builds/libsqlite3
 COPY ./libxml2/ /root/builds/libxml2
 COPY ./libz/ /root/builds/libz
 COPY ./oniguruma/ /root/builds/oniguruma
+COPY ./libintl/ /root/builds/libintl
 
 RUN if [ "$WITH_JSPI" = "yes" ]; then \
 	cp -r /root/builds/*/jspi/dist/root/lib/* /root/lib; \
@@ -78,6 +84,7 @@ ARG WITH_OPENSSL
 ARG WITH_ICONV
 ARG WITH_SOURCEMAPS
 ARG WITH_WS_NETWORKING_PROXY
+ARG WITH_INTL
 
 # The platform to build for: web or node
 ARG EMSCRIPTEN_ENVIRONMENT=web
@@ -258,6 +265,27 @@ RUN if [ "$WITH_MBSTRING" = "yes" ]; \
 	else echo -n ' --disable-mbstring ' >> /root/.php-configure-flags; \
 	fi;
 
+# Add intl if needed
+RUN if [ "$WITH_INTL" = "yes" ]; \
+	then \
+		if [ "${PHP_VERSION:0:1}" -eq "8" ] || [[ "${PHP_VERSION:0:1}" -eq "7" && "${PHP_VERSION:2:1}" -ge "2" ]]; then \
+			echo -n ' --enable-intl ' >> /root/.php-configure-flags; \
+			echo -n ' -licuuc -licudata -licui18n -licuio ' >> /root/.emcc-php-wasm-flags; \
+
+			if [[ "${PHP_VERSION:0:1}" -eq "7" && "${PHP_VERSION:2:1}" -le "3" ]]; then \
+				/root/replace.sh 's/UBool operator/bool operator/' /root/php-src/ext/intl/breakiterator/codepointiterator_internal.h; \
+				/root/replace.sh 's/UBool CodePointBreakIterator::operator/bool CodePointBreakIterator::operator/' /root/php-src/ext/intl/breakiterator/codepointiterator_internal.cpp; \
+				/root/replace.sh 's/ getArg/ phpGetArg/g; s/::getArg/::phpGetArg/g; s/ getMessage/ phpGetMessage/g; s/::getMessage/::phpGetMessage/g' /root/php-src/ext/intl/msgformat/msgformat_helpers.cpp; \
+			fi; \
+
+			if [[ "${PHP_VERSION:0:1}" -eq "7" && "${PHP_VERSION:2:1}" -eq "2" ]]; then \
+				files=( /root/php-src/ext/intl/collator/collator_sort.c /root/php-src/ext/intl/normalizer/normalizer_normalize.c /root/php-src/ext/intl/dateformat/dateformat_attr.c /root/php-src/ext/intl/timezone/timezone_class.cpp /root/php-src/ext/intl/timezone/timezone_methods.cpp /root/php-src/ext/intl/breakiterator/codepointiterator_internal.cpp ); \
+				for file in "${files[@]}"; do /root/replace.sh 's/\bFALSE\b/false/g; s/\bTRUE\b/true/g' "$file"; done; \
+			fi; \
+		fi; \
+	fi;
+
+
 # Add mbregex if needed
 # PHP == 7.0 likely needs an older version of oniguruma and isn't supported for now.
 RUN if [ "$WITH_MBREGEX" = "yes" ] && [ "${PHP_VERSION:0:3}" != "7.0" ]; \
@@ -294,6 +322,7 @@ RUN if [ "$WITH_MYSQL" = "yes" ]; then \
 # Build the patched PHP
 WORKDIR /root/php-src
 RUN source /root/emsdk/emsdk_env.sh && \
+ICU_CFLAGS="-fPIC -I/root/lib/include" \
 CURL_CFLAGS="-I/root/lib/include" \
 WEBP_LIBS="-L/root/lib/lib" \
 WEBP_CFLAGS="-I/root/lib/include" \
@@ -371,8 +400,37 @@ RUN echo 'extern FILE *wasm_popen(const char *cmd, const char *mode);' >> /root/
 # Provide a custom implementation of the shutdown() function.
 RUN perl -pi.bak -e $'s/(\s+)shutdown\(/$1 wasm_shutdown(/g' /root/php-src/sapi/cli/php_cli_server.c
 RUN perl -pi.bak -e $'s/(\s+)closesocket\(/$1 wasm_close(/g' /root/php-src/sapi/cli/php_cli_server.c
-RUN echo 'extern int wasm_shutdown(int fd, int how);' >> /root/php-src/main/php_config.h;
-RUN echo 'extern int wasm_close(int fd);' >> /root/php-src/main/php_config.h;
+
+# Provide custom implementation fo the shutdown() function.
+# This is used by intl ( which links C++ code ) and need C linkage.
+RUN cat >> /root/php-src/main/php_config.h <<EOF
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern int wasm_shutdown(int fd, int how);
+extern int wasm_close(int fd);
+
+#ifdef __cplusplus
+}
+#endif
+EOF
+
+# This is used by intl ( which links C++ code ) and need C linkage. Needed in PHP < 7.4.
+RUN sed -i '/^extern char \*\*environ;/d' /root/php-src/main/php.h \
+ && cat <<EOF >> /root/php-src/main/php.h
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern char **environ;
+
+#ifdef __cplusplus
+}
+#endif
+EOF
+
+
 
 # Don't ship PHP_FUNCTION(proc_open) with the PHP build
 # so that we can ship a patched version with php_wasm.c
@@ -384,7 +442,7 @@ RUN source /root/emsdk/emsdk_env.sh && \
 	export JSPI_FLAGS=$(if [ "$WITH_JSPI" = "yes" ]; then echo "-sSUPPORT_LONGJMP=wasm -fwasm-exceptions"; else echo ""; fi) && \
 	EMCC_FLAGS=" -sSIDE_MODULE -Dsetsockopt=wasm_setsockopt -Dphp_exec=wasm_php_exec $JSPI_FLAGS " \
 	# ...which means we must skip all the libraries - they will be provided in the final linking step.
-	EMCC_SKIP="-lz -ledit -ldl -lncurses -lzip -lpng16 -lssl -lcrypto -lxml2 -lc -lm -lsqlite3 /root/lib/lib/libxml2.a /root/lib/lib/libsqlite3.so /root/lib/lib/libsqlite3.a /root/lib/lib/libsqlite3.a /root/lib/lib/libpng16.so /root/lib/lib/libwebp.a /root/lib/lib/libjpeg.a" \
+	EMCC_SKIP="-lz -ledit -ldl -lncurses -lzip -lpng16 -lssl -licuuc -licudata -licui18n -licuio -lcrypto -lxml2 -lc -lm -lsqlite3 /root/lib/lib/libxml2.a /root/lib/lib/libsqlite3.so /root/lib/lib/libsqlite3.a /root/lib/lib/libsqlite3.a" \
 	emmake make -j1
 
 RUN cp -v /root/php-src/.libs/libphp*.la /root/lib/libphp.la
@@ -964,7 +1022,7 @@ RUN set -euxo pipefail; \
 	else \
 		export ASYNCIFY_FLAGS=" -s ASYNCIFY=1 -s ASYNCIFY_IGNORE_INDIRECT=1 -s EXPORTED_RUNTIME_METHODS=ccall,PROXYFS,wasmExports $(cat /root/.emcc-php-asyncify-flags)  "; \
 		echo '' > /root/php_wasm_asyncify.h; \
-	fi; \	
+	fi; \
 	export EXPORTED_FUNCTIONS=$'["_exit", \n\
 "UTF8ToString", \n\
 "stringToUTF8", \n\
